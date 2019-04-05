@@ -85,6 +85,14 @@ C++ and Python paths. You can re-run this process later using the appropriate co
   </tbody>
 </table>
 
+Links:
+
+https://github.com/ros-industrial/ros_qtc_plugin/blob/4.8/src/project_manager/ros_run_configuration.cpp
+https://vscode.readthedocs.io/en/latest/extensionAPI/extension-points/
+https://vscode.readthedocs.io/en/latest/extensions/example-debuggers/
+https://github.com/Microsoft/vscode-mock-debug/blob/master/src/mockDebug.ts
+https://microsoft.github.io/debug-adapter-protocol/overview#How_it_works
+
 [issues]: https://github.com/ajshort/vscode-ros/issues
 [repo]: https://github.com/ajshort/vscode-ros
 [ros]: http://ros.org
