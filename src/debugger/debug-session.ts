@@ -12,7 +12,7 @@ interface ILaunchRequestArguments extends Protocol.LaunchRequestArguments {
 
 export default class DebugSession extends adapter.DebugSession {
   private process: cp.ChildProcess;
-
+  private static THREAD_ID = 1;
   public shutdown() {
     if (this.process) {
       this.process.kill();
@@ -40,7 +40,9 @@ export default class DebugSession extends adapter.DebugSession {
     this.process.stderr.on("data", chunk =>
       this.sendEvent(new adapter.OutputEvent(chunk.toString(), "stderr"))
     );
-
+    this.process.on('stopOnBreakpoint', () => {
+			this.sendEvent(new adapter.StoppedEvent('breakpoint', DebugSession.THREAD_ID));
+    });
     this.process.on("error", (err: Error) => {
       this.sendEvent(new adapter.OutputEvent(err.message, "stderr"));
       this.sendEvent(new adapter.TerminatedEvent());

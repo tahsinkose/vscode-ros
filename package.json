@@ -69,6 +69,10 @@
         }
       }
     },
+    "breakpoints": [
+      { "language": "cpp" },
+      {"language": "python"}
+    ],
     "debuggers": [
       {
         "type": "ros",
