@@ -14,9 +14,9 @@
       "preLaunchTask": "npm",
       "command": "roslaunch",
       "package": "dji_m100_gazebo",
-      "target": "start.launch",
-      "debugSettings": "",
-      "debugServer": 4713
+      "target": "dji_empty_world.launch",
+      "debugSettings": "{}",
+      "debugServer": 4714
     },
     {
       "name": "Debugger",
@@ -24,7 +24,7 @@
       "request": "launch",
       "cwd": "${workspaceRoot}",
       "program": "${workspaceRoot}/out/src/debugger/main.js",
-      "args": ["--server=4713"],
+      "args": ["--server=4714"],
       "stopOnEntry": false,
       "sourceMaps": true,
       "outFiles": ["${workspaceRoot}/out/src/**/*.js"],

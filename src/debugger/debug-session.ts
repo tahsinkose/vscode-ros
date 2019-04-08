@@ -28,11 +28,11 @@ export default class DebugSession extends adapter.DebugSession {
     }
 
     // Merge the ROS env with the current env so we aren't running in headless mode.
-    //const settings = JSON.parse(request.debugSettings);
+    const settings = JSON.parse(request.debugSettings);
     const env = Object.assign(process.env);
     const args = [request.package, request.target].concat(request.args || []);
 
-    this.process = cp.spawn("/opt/ros/melodic/bin/roslaunch", args.slice(0,2), { env });
+    this.process = cp.spawn(request.command, args.slice(0,2), { env });
     
     this.process.stdout.on("data", chunk =>
       this.sendEvent(new adapter.OutputEvent(chunk.toString(), "stdout"))
