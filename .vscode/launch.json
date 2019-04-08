@@ -1,18 +1,22 @@
 // A launch configuration that compiles the extension and then opens it inside a new window
 {
-  "version": "0.1.0",
+  "version": "2.0.0",
   "configurations": [
     {
-      "name": "Extension",
+      "name": "ROS Debug Test",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+      "args": [],
       "stopOnEntry": true,
       "sourceMaps": true,
       "outFiles": ["${workspaceRoot}/out/src/**/*.js"],
       "preLaunchTask": "npm",
-      "debugServer": 4712
+      "command": "roslaunch",
+      "package": "dji_m100_gazebo",
+      "target": "start.launch",
+      "debugSettings": "",
+      "debugServer": 4713
     },
     {
       "name": "Debugger",
@@ -20,7 +24,7 @@
       "request": "launch",
       "cwd": "${workspaceRoot}",
       "program": "${workspaceRoot}/out/src/debugger/main.js",
-      "args": ["--server=4712"],
+      "args": ["--server=4713"],
       "stopOnEntry": false,
       "sourceMaps": true,
       "outFiles": ["${workspaceRoot}/out/src/**/*.js"],
