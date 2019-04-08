@@ -71,7 +71,8 @@
     },
     "breakpoints": [
       { "language": "cpp" },
-      {"language": "python"}
+      { "language": "python"},
+      { "language": "xml"}
     ],
     "debuggers": [
       {
