@@ -70,9 +70,15 @@
       }
     },
     "breakpoints": [
-      { "language": "cpp" },
-      { "language": "python"},
-      { "language": "xml"}
+      {
+        "language": "cpp"
+      },
+      {
+        "language": "python"
+      },
+      {
+        "language": "xml"
+      }
     ],
     "debuggers": [
       {
@@ -199,6 +205,7 @@
     "vscode:prepublish": "tsc -p ./"
   },
   "dependencies": {
+    "await-notify": "^1.0.1",
     "underscore": "^1.8.3",
     "vscode-debugadapter": "^1.15.0",
     "vscode-debugprotocol": "^1.15.0",

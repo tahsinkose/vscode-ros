@@ -22,8 +22,8 @@ export default class DebugSession extends adapter.DebugSession {
   public constructor()
   {
       super();
-      this.setDebuggerLinesStartAt1(false);
-      this.setDebuggerColumnsStartAt1(false);
+      this.setDebuggerLinesStartAt1(true);
+      this.setDebuggerColumnsStartAt1(true);
       this.on('stopOnEntry', () => {
         this.sendEvent(new adapter.StoppedEvent('entry', DebugSession.THREAD_ID));
       });
@@ -39,7 +39,7 @@ export default class DebugSession extends adapter.DebugSession {
       this.on('breakpointValidated', (bp: DebugProtocol.Breakpoint) => {
         this.sendEvent(new adapter.BreakpointEvent('changed', <DebugProtocol.Breakpoint>{ verified: bp.verified, id: bp.id }));
       });
-      this.process.on("exit", () => this.sendEvent(new adapter.TerminatedEvent()));
+      this.on("end", () => this.sendEvent(new adapter.TerminatedEvent()));
   }
 
   /**
@@ -66,7 +66,17 @@ export default class DebugSession extends adapter.DebugSession {
 		// we request them early by sending an 'initializeRequest' to the frontend.
 		// The frontend will end the configuration sequence by calling 'configurationDone' request.
 		this.sendEvent(new adapter.InitializedEvent());
-}
+  }
+  /**
+	 * Called at the end of the configuration sequence.
+	 * Indicates that all breakpoints etc. have been sent to the DA and that the 'launch' can start.
+	 */
+	protected configurationDoneRequest(response: DebugProtocol.ConfigurationDoneResponse, args: DebugProtocol.ConfigurationDoneArguments): void {
+		super.configurationDoneRequest(response, args);
+
+		// notify the launchRequest that configuration has finished
+		this._configurationDone.notify();
+  } 
   public shutdown() {
     super.shutdown();
   }
@@ -76,7 +86,8 @@ export default class DebugSession extends adapter.DebugSession {
       this.sendErrorResponse(response, 0, "Invalid command");
       return;
     }
-
+    // wait until configuration has finished (and configurationDoneRequest has been called)
+    //await this._configurationDone.wait(10);
     // Merge the ROS env with the current env so we aren't running in headless mode.
     const args = [request.package, request.target].concat(request.args || []);
     const workspaceSetup = '/home/tahsin/dji_ws/devel/setup.bash';
@@ -88,8 +99,6 @@ export default class DebugSession extends adapter.DebugSession {
       }
     }
     this.process = cp.spawn(request.command, args, { env });
-    
-
     this.sendResponse(response);
   }
 }
