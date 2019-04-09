@@ -1,6 +1,8 @@
 import * as cp from "child_process";
 import * as adapter from "vscode-debugadapter";
+import * as pfs from "../promise-fs";
 import { DebugProtocol as Protocol } from "vscode-debugprotocol";
+
 
 interface ILaunchRequestArguments extends Protocol.LaunchRequestArguments {
   command: "roslaunch" | "rosrun";
@@ -28,12 +30,11 @@ export default class DebugSession extends adapter.DebugSession {
     }
 
     // Merge the ROS env with the current env so we aren't running in headless mode.
-    const settings = JSON.parse(request.debugSettings);
-    const env = Object.assign(process.env);
     const args = [request.package, request.target].concat(request.args || []);
-
-    this.process = cp.spawn(request.command, args.slice(0,2), { env });
-    
+    const workspaceSetup = '/home/tahsin/dji_ws/devel/setup.bash';
+    const env = sourceSetupFile(workspaceSetup, {});
+    this.process = cp.spawn(request.command, args, { env });
+    console.log(env)
     this.process.stdout.on("data", chunk =>
       this.sendEvent(new adapter.OutputEvent(chunk.toString(), "stdout"))
     );
@@ -51,4 +52,24 @@ export default class DebugSession extends adapter.DebugSession {
 
     this.sendResponse(response);
   }
+}
+
+export async function sourceSetupFile(filename: string, env?: any): Promise<any> {
+  return new Promise((resolve, reject) => {
+    cp.exec(`bash -c "source '${filename}' && env"`, { env }, (err, out) => {
+      if (!err) {
+        resolve(out.split("\n").reduce((env, line) => {
+          const index = line.indexOf("=");
+
+          if (index !== -1) {
+            env[line.substr(0, index)] = line.substr(index + 1);
+          }
+
+          return env;
+        }, {}));
+      } else {
+        reject(err);
+      }
+    });
+  });
 }

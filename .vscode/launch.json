@@ -25,7 +25,7 @@
       "cwd": "${workspaceRoot}",
       "program": "${workspaceRoot}/out/src/debugger/main.js",
       "args": ["--server=4714"],
-      "stopOnEntry": false,
+      "stopOnEntry": true,
       "sourceMaps": true,
       "outFiles": ["${workspaceRoot}/out/src/**/*.js"],
       "preLaunchTask": "npm"
