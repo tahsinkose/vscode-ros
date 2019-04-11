@@ -3,42 +3,12 @@
   "version": "2.0.0",
   "configurations": [
     {
-      "name": "C++ test",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${workspaceFolder}/dbgtest",
-      "args": [],
-      "stopAtEntry": true,
-      "cwd": "${workspaceFolder}",
-      "environment": [],
-      "externalConsole": false,
-      "MIMode": "gdb",
-      "setupCommands": [
-          {
-              "description": "Enable pretty-printing for gdb",
-              "text": "-enable-pretty-printing",
-              "ignoreFailures": true
-          }
-      ]
-    },
-    {
-      "name": "Extension",
-      "type": "extensionHost",
-      "request": "launch",
-      "runtimeExecutable": "${execPath}",
-      "args": ["--extensionDevelopmentPath=${workspaceRoot}"],
-      "stopOnEntry": false,
-      "sourceMaps": true,
-      "outFiles": ["${workspaceRoot}/out/src/**/*.js"],
-      "preLaunchTask": "npm"
-    },
-    {
       "name": "ROS Debug Test",
       "type": "extensionHost",
       "request": "launch",
       "runtimeExecutable": "${execPath}",
-      "args": ["verbose:=true"],
-      "stopOnEntry": false,
+      "args": [],
+      "stopOnEntry": true,
       "sourceMaps": true,
       "outFiles": ["${workspaceRoot}/out/src/**/*.js"],
       "preLaunchTask": "npm",
@@ -55,7 +25,7 @@
       "cwd": "${workspaceRoot}",
       "program": "${workspaceRoot}/out/src/debugger/main.js",
       "args": ["--server=4714"],
-      "stopOnEntry": false,
+      "stopOnEntry": true,
       "sourceMaps": true,
       "outFiles": ["${workspaceRoot}/out/src/**/*.js"],
       "preLaunchTask": "npm"
