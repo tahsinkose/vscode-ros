@@ -3,6 +3,8 @@ import * as adapter from "vscode-debugadapter";
 import * as pfs from "../promise-fs";
 import { DebugProtocol as Protocol } from "vscode-debugprotocol";
 const { Subject } = require('await-notify');
+import { RoslaunchRuntime, RoslaunchBreakpoint } from './roslaunch-runtime';
+import { findPackageLaunchFiles } from "../utils";
 
 interface ILaunchRequestArguments extends Protocol.LaunchRequestArguments {
   command: "roslaunch" | "rosrun";
@@ -10,35 +12,36 @@ interface ILaunchRequestArguments extends Protocol.LaunchRequestArguments {
   target: string;
   args: string[];
   debugSettings: string;
+  stopOnEntry: boolean;
 }
 
 export default class DebugSession extends adapter.DebugSession {
   private process: cp.ChildProcess;
   private static THREAD_ID = 1;
   private _variableHandles = new adapter.Handles<string>();
-
+  private _runtime: RoslaunchRuntime;
   private _configurationDone = new Subject();
   public constructor() {
       super();
       this.setDebuggerLinesStartAt1(false);
       this.setDebuggerColumnsStartAt1(false);
-
-      this.on('stopOnEntry', () => {
+      this._runtime = new RoslaunchRuntime();
+      this._runtime.on('stopOnEntry', () => {
         this.sendEvent(new adapter.StoppedEvent('entry', DebugSession.THREAD_ID));
       });
-      this.on('stopOnStep', () => {
+      this._runtime.on('stopOnStep', () => {
         this.sendEvent(new adapter.StoppedEvent('step', DebugSession.THREAD_ID));
       });
-      this.on('stopOnBreakpoint', () => {
+      this._runtime.on('stopOnBreakpoint', () => {
         this.sendEvent(new adapter.StoppedEvent('breakpoint', DebugSession.THREAD_ID));
       });
-      this.on('stopOnException', () => {
+      this._runtime.on('stopOnException', () => {
         this.sendEvent(new adapter.StoppedEvent('exception', DebugSession.THREAD_ID));
       });
-      this.on('breakpointValidated', (bp: Protocol.Breakpoint) => {
+      this._runtime.on('breakpointValidated', (bp: RoslaunchBreakpoint) => {
         this.sendEvent(new adapter.BreakpointEvent('changed', <Protocol.Breakpoint>{ verified: bp.verified, id: bp.id }));
       });
-      this.on('end', () => {
+      this._runtime.on('end', () => {
         this.sendEvent(new adapter.TerminatedEvent());
       });
   }
@@ -102,7 +105,7 @@ export default class DebugSession extends adapter.DebugSession {
         env[key] = process.env[key]
       }
     }
-    this.process = cp.spawn(request.command, args, { env });
+    /*this.process = cp.spawn(request.command, args, { env });
     this.process.stdout.on("data", chunk =>
       this.sendEvent(new adapter.OutputEvent(chunk.toString(), "stdout"))
     );
@@ -116,12 +119,47 @@ export default class DebugSession extends adapter.DebugSession {
       this.sendEvent(new adapter.OutputEvent(err.message, "stderr"));
       this.sendEvent(new adapter.TerminatedEvent());
     });
-    this.process.on("exit", () => this.sendEvent(new adapter.TerminatedEvent()));
-
+    this.process.on("exit", () => this.sendEvent(new adapter.TerminatedEvent()));*/
+    let package_path = await findLaunchFile(request.package,env);
+    package_path = package_path.slice(0,-1)
+    const launch_file = package_path + '/launch/' + request.target
+    this._runtime.start(launch_file, !!request.stopOnEntry);
     this.sendResponse(response);
   }
-}
+  protected setBreakPointsRequest(response: Protocol.SetBreakpointsResponse, args: Protocol.SetBreakpointsArguments): void {
 
+		const path = <string>args.source.path;
+		const clientLines = args.lines || [];
+
+		// clear all breakpoints for this file
+		this._runtime.clearBreakpoints(path);
+
+		// set and verify breakpoint locations
+		const actualBreakpoints = clientLines.map(l => {
+			let { verified, line, id } = this._runtime.setBreakPoint(path, this.convertClientLineToDebugger(l));
+			const bp = <Protocol.Breakpoint> new adapter.Breakpoint(verified, this.convertDebuggerLineToClient(line));
+			bp.id= id;
+			return bp;
+		});
+
+		// send back the actual breakpoint positions
+		response.body = {
+			breakpoints: actualBreakpoints
+		};
+		this.sendResponse(response);
+  }
+}
+export async function findLaunchFile(package_: string, env?: any):Promise<any> {
+  return new Promise((resolve,reject) => {
+      cp.exec(`bash -c "rospack find '${package_}'"`,{env}, (err,out) => {
+        if (!err) {
+        resolve(out);
+        } else {
+        reject(err);
+        }
+      });
+  });
+}
 export async function sourceSetupFile(filename: string, env?: any): Promise<any> {
   return new Promise((resolve, reject) => {
     cp.exec(`bash -c "source '${filename}' && env"`, { env }, (err, out) => {
