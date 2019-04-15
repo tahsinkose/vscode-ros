@@ -26,33 +26,28 @@ export class RosDebugConfigProvider implements DebugConfigurationProvider {
   }
 
   async resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken) {
-    const packages = utils.getPackages();
-
-    const command = await window.showQuickPick(["roslaunch", "rosrun"], {  placeHolder: "Launch command" });
-    const packageName = await window.showQuickPick(packages.then(Object.keys), { placeHolder: "Package" });
-
-    let target: string;
-
-    if (packageName) {
-      let basenames = (files: string[]) => files.map(file => basename(file));
-
-      if (command === "roslaunch") {
-        const launches = utils.findPackageLaunchFiles(packageName).then(basenames);
-        target = await window.showQuickPick(launches, { placeHolder: "Launch file" });
-      } else {
-        const executables = utils.findPackageExecutables(packageName).then(basenames);
-        target = await window.showQuickPick(executables, { placeHolder: "Executable" });
-      }
-    } else {
-      target = await window.showInputBox({ placeHolder: "Target" });
+    
+    config.type = "ros";
+    if(!config.command){
+      config.command = await window.showQuickPick(["roslaunch", "rosrun"], {  placeHolder: "Launch command" });
+    }
+    if(!config.package)
+    {
+      const packages = utils.getPackages();
+      config.package = await window.showQuickPick(packages.then(Object.keys), { placeHolder: "Package" });
     }
 
-    config.type = "ros";
-    config.request = "launch";
-    config.command = command;
-    config.package = packageName;
-    config.target = target;
-    config.args = [];
+    if (!config.target) {
+      let basenames = (files: string[]) => files.map(file => basename(file));
+
+      if (config.command === "roslaunch") {
+        const launches = utils.findPackageLaunchFiles(config.package).then(basenames);
+        config.target = await window.showQuickPick(launches, { placeHolder: "Launch file" });
+      } else {
+        const executables = utils.findPackageExecutables(config.package).then(basenames);
+        config.target = await window.showQuickPick(executables, { placeHolder: "Executable" });
+      }
+    }
     config.debugSettings = "${command:debugSettings}";
 
     return config;
