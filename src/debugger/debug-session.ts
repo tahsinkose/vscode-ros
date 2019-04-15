@@ -1,10 +1,8 @@
 import * as cp from "child_process";
 import * as adapter from "vscode-debugadapter";
-import * as pfs from "../promise-fs";
 import { DebugProtocol as Protocol } from "vscode-debugprotocol";
 const { Subject } = require('await-notify');
 import { RoslaunchRuntime, RoslaunchBreakpoint } from './roslaunch-runtime';
-import { findPackageLaunchFiles } from "../utils";
 
 interface ILaunchRequestArguments extends Protocol.LaunchRequestArguments {
   command: "roslaunch" | "rosrun";
@@ -146,6 +144,10 @@ export default class DebugSession extends adapter.DebugSession {
 		response.body = {
 			breakpoints: actualBreakpoints
 		};
+		this.sendResponse(response);
+  }
+  protected continueRequest(response: Protocol.ContinueResponse, args: Protocol.ContinueArguments): void {
+		this._runtime.continue();
 		this.sendResponse(response);
   }
 }

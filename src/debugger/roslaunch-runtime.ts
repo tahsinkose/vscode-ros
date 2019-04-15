@@ -47,8 +47,8 @@ export class RoslaunchRuntime extends EventEmitter {
 			// we just start to run until we hit a breakpoint or an exception
 			this.continue();
 		}
-    }
-    public continue(reverse = false) {
+  }
+  public continue(reverse = false) {
 		this.run(reverse, undefined);
 	}
 

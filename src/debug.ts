@@ -1,3 +1,5 @@
+'use strict';
+
 import * as extension from "./extension";
 import * as utils from "./utils";
 import { basename } from "path";
@@ -9,6 +11,9 @@ import {
   ProviderResult,
   WorkspaceFolder,
 } from "vscode";
+import * as Net from 'net';
+import RosDebugSession from './debugger/debug-session';
+import * as vscode from "vscode";
 
 /**
  * Gets stringified settings to pass to the debug server.
@@ -26,35 +31,57 @@ export class RosDebugConfigProvider implements DebugConfigurationProvider {
   }
 
   async resolveDebugConfiguration(folder: WorkspaceFolder | undefined, config: DebugConfiguration, token?: CancellationToken) {
-    const packages = utils.getPackages();
-
-    const command = await window.showQuickPick(["roslaunch", "rosrun"], {  placeHolder: "Launch command" });
-    const packageName = await window.showQuickPick(packages.then(Object.keys), { placeHolder: "Package" });
-
+    
+    config.type = "ros";
+    if(!config.command){
+      config.command = await window.showQuickPick(["roslaunch", "rosrun"], {  placeHolder: "Launch command" });
+    }
+    if(!config.package)
+    {
+      const packages = utils.getPackages();
+      config.package = await window.showQuickPick(packages.then(Object.keys), { placeHolder: "Package" });
+    }
     let target: string;
 
-    if (packageName) {
+    if (!config.target) {
       let basenames = (files: string[]) => files.map(file => basename(file));
 
-      if (command === "roslaunch") {
-        const launches = utils.findPackageLaunchFiles(packageName).then(basenames);
-        target = await window.showQuickPick(launches, { placeHolder: "Launch file" });
+      if (config.command === "roslaunch") {
+        const launches = utils.findPackageLaunchFiles(config.package).then(basenames);
+        config.target = await window.showQuickPick(launches, { placeHolder: "Launch file" });
       } else {
-        const executables = utils.findPackageExecutables(packageName).then(basenames);
-        target = await window.showQuickPick(executables, { placeHolder: "Executable" });
+        const executables = utils.findPackageExecutables(config.package).then(basenames);
+        config.target = await window.showQuickPick(executables, { placeHolder: "Executable" });
       }
-    } else {
-      target = await window.showInputBox({ placeHolder: "Target" });
     }
-
-    config.type = "ros";
-    config.request = "launch";
-    config.command = command;
-    config.package = packageName;
-    config.target = target;
-    config.args = [];
     config.debugSettings = "${command:debugSettings}";
 
     return config;
   }
+}
+
+export class RosDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
+
+	private server?: Net.Server;
+
+	createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable | undefined): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+
+		if (!this.server) {
+			// start listening on a random port
+			this.server = Net.createServer(socket => {
+				const session = new RosDebugSession();
+				session.setRunAsServer(true);
+				session.start(<NodeJS.ReadableStream>socket, socket);
+			}).listen(0);
+		}
+
+		// make VS Code connect to debug server
+		return new vscode.DebugAdapterServer(this.server.address().port);
+	}
+
+	dispose() {
+		if (this.server) {
+			this.server.close();
+		}
+	}
 }
