@@ -1,5 +1,4 @@
 import * as extension from "./extension";
-import * as pfs from "./promise-fs";
 import * as cp from "child_process";
 import * as _ from "underscore";
 import * as vscode from "vscode";
@@ -35,13 +34,6 @@ export function sourceSetupFile(filename: string, env?: any): Promise<any> {
 }
 
 /**
- * Gets the names of installed distros.
- */
-export function getDistros(): Promise<string[]> {
-  return pfs.readdir("/opt/ros");
-}
-
-/**
  * Gets a map of package names to paths.
  */
 export function getPackages(): Promise<{ [name: string]: string }> {
@@ -52,15 +44,6 @@ export function getPackages(): Promise<{ [name: string]: string }> {
       reject(err);
     }
   }));
-}
-
-/**
- * Gets include dirs using `catkin_find`.
- */
-export function getIncludeDirs(): Promise<string[]> {
-  return new Promise((c, e) => cp.exec("catkin_find --include", { env: extension.env }, (err, out) =>
-    err ? e(err) : c(out.trim().split("\n"))
-  ));
 }
 
 /**

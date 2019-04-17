@@ -27,7 +27,7 @@
       "package": "dji_m100_gazebo",
       "target": "dji_empty_world.launch",
       "debugSettings": "{}",
-      "debugServer": 4714
+      "debugServer": 4715
     },
     {
       "name": "Debugger",
@@ -35,7 +35,7 @@
       "request": "launch",
       "cwd": "${workspaceRoot}",
       "program": "${workspaceRoot}/out/src/debugger/main.js",
-      "args": ["--server=4714"],
+      "args": ["--server=4715"],
       "stopOnEntry": true,
       "sourceMaps": true,
       "outFiles": ["${workspaceRoot}/out/src/**/*.js"],
