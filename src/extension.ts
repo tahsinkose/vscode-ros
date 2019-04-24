@@ -1,5 +1,7 @@
 import * as utils from "./utils";
 import * as vscode from "vscode";
+import { basename } from "path";
+import { readFileSync } from 'fs';
 
 /**
  * The catkin workspace base dir.
@@ -24,13 +26,25 @@ export async function activate(context: vscode.ExtensionContext) {
 	const workspaceSetup = `${baseDir}/devel/setup.bash`;
 	env = await utils.sourceSetupFile(workspaceSetup, env);
 	
-	let disposable = vscode.commands.registerCommand('extension.PrepareToDebug', () => {
-		    const packages = utils.getPackages();
-      	const package_ = vscode.window.showQuickPick(packages.then(Object.keys), { placeHolder: "Package" });
+	let disposable = vscode.commands.registerCommand('extension.PrepareToDebug', async () => {
+		const packages = utils.getPackages();
+		const package_ = await vscode.window.showQuickPick(packages.then(Object.keys), { placeHolder: "Package" });
+		let basenames = (files: string[]) => files.map(file => basename(file));
+		const launches = utils.findPackageLaunchFiles(package_).then(basenames);
+		const absolute_launch_paths = await utils.findPackageLaunchFiles(package_);
+		const target = await vscode.window.showQuickPick(launches, { placeHolder: "Launch file" });
+		let fpath: string;
+		for(let path_ of absolute_launch_paths){
+			if(basename(path_) === target){
+				fpath = path_;
+			}
+		}
+		const sourceLines = readFileSync(fpath).toString().split('\n');	
 	});
 
 	subscriptions.push(disposable);
 }
+
 export function deactivate() {
   subscriptions.forEach(disposable => disposable.dispose());
 }
