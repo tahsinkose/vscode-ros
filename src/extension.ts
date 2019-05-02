@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { basename } from "path";
 import { readFileSync } from 'fs';
 
+  
 /**
  * The catkin workspace base dir.
  */
@@ -39,12 +40,37 @@ export async function activate(context: vscode.ExtensionContext) {
 				fpath = path_;
 			}
 		}
-		const sourceLines = readFileSync(fpath).toString().split('\n');	
+		let sourceLines = readFileSync(fpath).toString();
+		sourceLines = sourceLines.replace(/\n|\t/g, '');
+		var include_reg = /<include (.*?)<\/include>|<include (.*?)\/>/g;
+		var node_reg = /<node (.*?)\/>/g;
+		let includes: Array<String> = [];
+		let nodes: Array<String> = [];
+		// Parse all including packages and nodes
+		do {
+			var m = include_reg.exec(sourceLines);
+			var n = node_reg.exec(sourceLines);
+			if (m) {
+				if(m[1]){
+					includes.push(m[1]);
+				}
+				else if(m[2]){
+					includes.push(m[2]);
+				}
+			}
+			if(n){
+				nodes.push(n[1]);
+			}
+		} while (m);
+		nodes.push(...parse_packages(includes));
 	});
 
 	subscriptions.push(disposable);
 }
 
+export function parse_packages(includes: Array<String>) : Array<String> {
+	return includes;
+}
 export function deactivate() {
   subscriptions.forEach(disposable => disposable.dispose());
 }
